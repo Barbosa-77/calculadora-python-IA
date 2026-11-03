@@ -16,6 +16,8 @@ Operações fundamentais suportadas:
   2. Subtração (-)
   3. Multiplicação (*)
   4. Divisão (/) com validação contra divisão por zero
+  5. Potência (^) com suporte a expoentes reais
+  6. Porcentagem (%) calculando a taxa percentual de um valor
 
 Autor: Código Limpo & Modular
 Padrão: PEP 8 com Type Hinting
@@ -54,6 +56,27 @@ def divisao(a: Numero, b: Numero) -> float:
     return float(a / b)
 
 
+def potencia(a: Numero, b: Numero) -> float:
+    """
+    Calcula e retorna a base 'a' elevada ao expoente 'b' (a ** b).
+
+    Raises:
+        ZeroDivisionError: Lançado caso a base seja 0 e o expoente seja negativo.
+        ValueError: Lançado caso o cálculo resulte em número complexo.
+    """
+    if a == 0 and b < 0:
+        raise ZeroDivisionError("Erro matemático: Não é possível elevar zero (0) a um expoente negativo.")
+    resultado = a ** b
+    if isinstance(resultado, complex):
+        raise ValueError("Erro matemático: O resultado é um número complexo (base negativa com expoente fracionário).")
+    return float(resultado)
+
+
+def porcentagem(a: Numero, b: Numero) -> float:
+    """Calcula e retorna a porcentagem de um valor: (a * b) / 100."""
+    return float((a * b) / 100)
+
+
 def obter_numero(mensagem: str) -> float:
     """
     Solicita um número ao usuário e valida a entrada contra erros de tipo (ValueError).
@@ -76,7 +99,9 @@ def exibir_menu() -> None:
     print(" 2. Subtração (-)")
     print(" 3. Multiplicação (*)")
     print(" 4. Divisão (/)")
-    print(" 5. Sair")
+    print(" 5. Potência (^)")
+    print(" 6. Porcentagem (%)")
+    print(" 7. Sair")
     print("=" * 40)
 
 
@@ -91,22 +116,24 @@ def executar_calculadora() -> None:
         "2": ("-", subtracao),
         "3": ("*", multiplicacao),
         "4": ("/", divisao),
+        "5": ("^", potencia),
+        "6": ("%", porcentagem),
     }
 
     print("Bem-vindo à Calculadora Python!")
 
     while True:
         exibir_menu()
-        opcao = input("Selecione uma opção (1-5): ").strip()
+        opcao = input("Selecione uma opção (1-7): ").strip()
 
         # Condição de saída limpa
-        if opcao == "5":
+        if opcao == "7":
             print("\\nEncerrando a calculadora. Até logo!")
             break
 
         # Validação da opção informada
         if opcao not in operacoes:
-            print("\\n❌ Opção inexistente. Por favor, escolha um número de 1 a 5.")
+            print("\\n❌ Opção inexistente. Por favor, escolha um número de 1 a 7.")
             continue
 
         simbolo, funcao_operacao = operacoes[opcao]
@@ -115,13 +142,13 @@ def executar_calculadora() -> None:
         num1 = obter_numero("Digite o primeiro número: ")
         num2 = obter_numero("Digite o segundo número: ")
 
-        # Execução protegida com tratamento de ZeroDivisionError
+        # Execução protegida com tratamento de ZeroDivisionError e ValueError
         try:
             resultado = funcao_operacao(num1, num2)
             # Formata sem casas decimais se for inteiro exato (ex: 4.0 -> 4)
             res_str = f"{int(resultado)}" if resultado.is_integer() else f"{resultado:.4f}".rstrip("0").rstrip(".")
             print(f"\\n✅ Resultado: {num1} {simbolo} {num2} = {res_str}")
-        except ZeroDivisionError as erro:
+        except (ZeroDivisionError, ValueError) as erro:
             print(f"\\n⚠️  {erro}")
 
 
@@ -177,6 +204,23 @@ class Calculadora:
         self._registrar_historico(f"{a} / {b}", resultado)
         return resultado
 
+    def potenciar(self, a: Numero, b: Numero) -> float:
+        """Executa a potenciação e registra no histórico."""
+        if a == 0 and b < 0:
+            raise ZeroDivisionError("Zero não pode ser elevado a potência negativa.")
+        resultado = a ** b
+        if isinstance(resultado, complex):
+            raise ValueError("Resultado complexo não suportado.")
+        resultado_float = float(resultado)
+        self._registrar_historico(f"{a} ^ {b}", resultado_float)
+        return resultado_float
+
+    def porcentagem(self, a: Numero, b: Numero) -> float:
+        """Calcula a porcentagem ((a * b) / 100) e registra no histórico."""
+        resultado = float((a * b) / 100)
+        self._registrar_historico(f"{b}% de {a}", resultado)
+        return resultado
+
     def _registrar_historico(self, expressao: str, resultado: float) -> None:
         """Método auxiliar interno para registrar operações."""
         self.historico.append((expressao, resultado))
@@ -193,6 +237,8 @@ if __name__ == "__main__":
     print("Subtração:", calc.subtrair(20, 8))       # 12.0
     print("Multiplicação:", calc.multiplicar(4, 3)) # 12.0
     print("Divisão:", calc.dividir(50, 2))          # 25.0
+    print("Potência:", calc.potenciar(2, 8))        # 256.0
+    print("Porcentagem:", calc.porcentagem(250, 15))# 37.5
     print("\\nHistórico:", calc.ver_historico())
 `;
 
@@ -202,7 +248,7 @@ Garante a corretude de todas as operações e tratamento de erros.
 """
 
 import unittest
-from calculadora import adicao, subtracao, multiplicacao, divisao
+from calculadora import adicao, subtracao, multiplicacao, divisao, potencia, porcentagem
 
 
 class TestCalculadora(unittest.TestCase):
@@ -233,6 +279,21 @@ class TestCalculadora(unittest.TestCase):
         with self.assertRaises(ZeroDivisionError):
             divisao(10, 0)
 
+    def test_potencia(self):
+        self.assertEqual(potencia(2, 3), 8.0)
+        self.assertEqual(potencia(5, 0), 1.0)
+        self.assertEqual(potencia(9, 0.5), 3.0)
+
+    def test_potencia_zero_negativo(self):
+        """Verifica se 0 elevado a expoente negativo dispara ZeroDivisionError."""
+        with self.assertRaises(ZeroDivisionError):
+            potencia(0, -2)
+
+    def test_porcentagem(self):
+        self.assertEqual(porcentagem(200, 15), 30.0)
+        self.assertEqual(porcentagem(50, 2.5), 1.25)
+        self.assertEqual(porcentagem(0, 50), 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -246,7 +307,7 @@ export const ARCHITECTURE_SECTIONS: CodeExplanation[] = [
     lineRange: "Linhas 21 - 50",
     summary: "Cada operação matemática possui uma função separada, independente e sem efeitos colaterais.",
     details:
-      "Em vez de colocar toda a lógica em um único bloco de código, separamos 'adicao', 'subtracao', 'multiplicacao' e 'divisao'. Cada função recebe apenas seus parâmetros numéricos e retorna o resultado. Isso atende ao Princípio de Responsabilidade Única (SRP - Single Responsibility Principle): a função de somar não sabe de onde vêm os dados (terminal, interface web, arquivo) nem como eles serão exibidos.",
+      "Em vez de colocar toda a lógica em um único bloco de código, separamos 'adicao', 'subtracao', 'multiplicacao', 'divisao', 'potencia' e 'porcentagem'. Cada função recebe apenas seus parâmetros numéricos e retorna o resultado. Isso atende ao Princípio de Responsabilidade Única (SRP - Single Responsibility Principle): as funções de cálculo não sabem de onde vêm os dados (terminal, interface web, arquivo) nem como eles serão exibidos.",
     benefits: [
       "Reutilização: as funções podem ser importadas em outros scripts sem precisar copiar código",
       "Testabilidade: é possível criar testes automatizados simples para cada função",

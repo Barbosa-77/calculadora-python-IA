@@ -19,9 +19,11 @@ const INITIAL_LINES: TerminalLine[] = [
   { id: '7', type: 'output', text: ' 2. Subtração (-)' },
   { id: '8', type: 'output', text: ' 3. Multiplicação (*)' },
   { id: '9', type: 'output', text: ' 4. Divisão (/)' },
-  { id: '10', type: 'output', text: ' 5. Sair' },
-  { id: '11', type: 'output', text: '========================================' },
-  { id: '12', type: 'output', text: 'Selecione uma opção (1-5): ' },
+  { id: '10', type: 'output', text: ' 5. Potência (^)' },
+  { id: '11', type: 'output', text: ' 6. Porcentagem (%)' },
+  { id: '12', type: 'output', text: ' 7. Sair' },
+  { id: '13', type: 'output', text: '========================================' },
+  { id: '14', type: 'output', text: 'Selecione uma opção (1-7): ' },
 ];
 
 export const InteractiveTerminal: React.FC = () => {
@@ -48,6 +50,8 @@ export const InteractiveTerminal: React.FC = () => {
       case '2': return '-';
       case '3': return '*';
       case '4': return '/';
+      case '5': return '^';
+      case '6': return '%';
       default: return '?';
     }
   };
@@ -61,9 +65,11 @@ export const InteractiveTerminal: React.FC = () => {
     addLine('output', ' 2. Subtração (-)');
     addLine('output', ' 3. Multiplicação (*)');
     addLine('output', ' 4. Divisão (/)');
-    addLine('output', ' 5. Sair');
+    addLine('output', ' 5. Potência (^)');
+    addLine('output', ' 6. Porcentagem (%)');
+    addLine('output', ' 7. Sair');
     addLine('output', '========================================');
-    addLine('output', 'Selecione uma opção (1-5): ');
+    addLine('output', 'Selecione uma opção (1-7): ');
   };
 
   const handleProcessInput = (rawValue: string) => {
@@ -74,15 +80,15 @@ export const InteractiveTerminal: React.FC = () => {
     setCurrentInput('');
 
     if (stepState === 'SELECT_OPTION') {
-      if (value === '5') {
+      if (value === '7') {
         addLine('output', '\nEncerrando a calculadora. Até logo!');
         addLine('system', '[Processo finalizado com código 0]');
         setStepState('EXITED');
         return;
       }
 
-      if (!['1', '2', '3', '4'].includes(value)) {
-        addLine('error', '\n❌ Opção inexistente. Por favor, escolha um número de 1 a 5.');
+      if (!['1', '2', '3', '4', '5', '6'].includes(value)) {
+        addLine('error', '\n❌ Opção inexistente. Por favor, escolha um número de 1 a 7.');
         showMenuLines();
         return;
       }
@@ -123,16 +129,21 @@ export const InteractiveTerminal: React.FC = () => {
       const n2 = parsed;
       const symbol = getOpSymbol(selectedOp);
 
-      // Perform calculation simulating python functions
+      // Perform calculation simulating python functions and exceptions
       if (selectedOp === '4' && n2 === 0) {
-        // ZeroDivisionError simulation
         addLine('error', '\n⚠️  Erro matemático: Não é possível dividir por zero (0).');
+      } else if (selectedOp === '5' && n1 === 0 && n2 < 0) {
+        addLine('error', '\n⚠️  Erro matemático: Não é possível elevar zero (0) a um expoente negativo.');
+      } else if (selectedOp === '5' && n1 < 0 && !Number.isInteger(n2)) {
+        addLine('error', '\n⚠️  Erro matemático: O resultado é um número complexo (base negativa com expoente fracionário).');
       } else {
         let result = 0;
         if (selectedOp === '1') result = n1 + n2;
         else if (selectedOp === '2') result = n1 - n2;
         else if (selectedOp === '3') result = n1 * n2;
         else if (selectedOp === '4') result = n1 / n2;
+        else if (selectedOp === '5') result = Math.pow(n1, n2);
+        else if (selectedOp === '6') result = (n1 * n2) / 100;
 
         const resStr = Number.isInteger(result) ? result.toString() : result.toFixed(4).replace(/\.?0+$/, '');
         addLine('success', `\n✅ Resultado: ${n1} ${symbol} ${n2} = ${resStr}`);
@@ -165,7 +176,7 @@ export const InteractiveTerminal: React.FC = () => {
   const handleClear = () => {
     setLines([
       { id: Math.random().toString(), type: 'system', text: '$ python calculadora.py' },
-      { id: Math.random().toString(), type: 'output', text: 'Selecione uma opção (1-5): ' },
+      { id: Math.random().toString(), type: 'output', text: 'Selecione uma opção (1-7): ' },
     ]);
     setStepState('SELECT_OPTION');
     setSelectedOp('');
@@ -185,7 +196,7 @@ export const InteractiveTerminal: React.FC = () => {
         currentLines.push({ id: Math.random().toString(), type: 'input', text: `> ${val}` });
 
         if (state === 'SELECT_OPTION') {
-          if (val === '5') {
+          if (val === '7') {
             currentLines.push({ id: Math.random().toString(), type: 'output', text: '\nEncerrando a calculadora. Até logo!' });
             currentLines.push({ id: Math.random().toString(), type: 'system', text: '[Processo finalizado com código 0]' });
             state = 'EXITED';
@@ -206,6 +217,18 @@ export const InteractiveTerminal: React.FC = () => {
               type: 'error',
               text: '\n⚠️  Erro matemático: Não é possível dividir por zero (0).',
             });
+          } else if (op === '5' && n1 === 0 && n2 < 0) {
+            currentLines.push({
+              id: Math.random().toString(),
+              type: 'error',
+              text: '\n⚠️  Erro matemático: Não é possível elevar zero (0) a um expoente negativo.',
+            });
+          } else if (op === '5' && n1 < 0 && !Number.isInteger(n2)) {
+            currentLines.push({
+              id: Math.random().toString(),
+              type: 'error',
+              text: '\n⚠️  Erro matemático: O resultado é um número complexo (base negativa com expoente fracionário).',
+            });
           } else {
             let res = 0;
             let sym = '+';
@@ -213,6 +236,8 @@ export const InteractiveTerminal: React.FC = () => {
             if (op === '2') { res = n1 - n2; sym = '-'; }
             if (op === '3') { res = n1 * n2; sym = '*'; }
             if (op === '4') { res = n1 / n2; sym = '/'; }
+            if (op === '5') { res = Math.pow(n1, n2); sym = '^'; }
+            if (op === '6') { res = (n1 * n2) / 100; sym = '%'; }
             const resStr = Number.isInteger(res) ? res.toString() : res.toFixed(4).replace(/\.?0+$/, '');
             currentLines.push({
               id: Math.random().toString(),
@@ -221,7 +246,7 @@ export const InteractiveTerminal: React.FC = () => {
             });
           }
           currentLines.push({ id: Math.random().toString(), type: 'output', text: '' });
-          currentLines.push({ id: Math.random().toString(), type: 'output', text: 'Selecione uma opção (1-5): ' });
+          currentLines.push({ id: Math.random().toString(), type: 'output', text: 'Selecione uma opção (1-7): ' });
           state = 'SELECT_OPTION';
         }
       });
@@ -301,10 +326,24 @@ export const InteractiveTerminal: React.FC = () => {
             </button>
 
             <button
-              onClick={() => runPreset(['5'])}
+              onClick={() => runPreset(['5', '2', '8'])}
+              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 hover:text-emerald-900 transition-colors dark:bg-slate-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-300 font-mono"
+            >
+              Potência: 2 ^ 8
+            </button>
+
+            <button
+              onClick={() => runPreset(['6', '250', '15'])}
+              className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-emerald-100 hover:text-emerald-900 transition-colors dark:bg-slate-800 dark:hover:bg-emerald-900/40 dark:hover:text-emerald-300 font-mono"
+            >
+              Porcentagem: 15% de 250
+            </button>
+
+            <button
+              onClick={() => runPreset(['7'])}
               className="px-2.5 py-1 rounded-md bg-slate-100 hover:bg-slate-200 transition-colors dark:bg-slate-800 dark:hover:bg-slate-700 font-mono"
             >
-              Opção 5: Sair
+              Opção 7: Sair
             </button>
           </div>
         </div>
@@ -376,7 +415,7 @@ export const InteractiveTerminal: React.FC = () => {
                 onKeyDown={handleKeyDown}
                 placeholder={
                   stepState === 'SELECT_OPTION'
-                    ? 'Digite 1, 2, 3, 4 ou 5 e pressione Enter...'
+                    ? 'Digite um número de 1 a 7 e pressione Enter...'
                     : 'Digite um número e pressione Enter...'
                 }
                 className="w-full bg-transparent text-emerald-300 placeholder-slate-600 outline-none border-none font-mono text-xs focus:ring-0"

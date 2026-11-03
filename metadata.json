@@ -1,6 +1,6 @@
 {
   "name": "Calculadora Python: Código Limpo & Playground Interativo",
-  "description": "Calculadora completa em Python com adição, subtração, multiplicação e divisão, código modular limpo, explicação passo a passo e terminal interativo.",
+  "description": "Calculadora completa em Python com adição, subtração, multiplicação, divisão, potência e porcentagem, código modular limpo, explicação passo a passo e terminal interativo.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

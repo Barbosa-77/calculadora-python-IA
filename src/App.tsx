@@ -82,13 +82,13 @@ export default function App() {
               <span aria-hidden="true">·</span>
               <span>Tratamento de Exceções</span>
               <span aria-hidden="true">·</span>
-              <span>4 Operações Matemáticas</span>
+              <span>6 Operações Matemáticas</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               Calculadora Python Modular &amp; Robusta
             </h1>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300 max-w-2xl">
-              Implementação organizada com adição, subtração, multiplicação e divisão protegida,
+              Implementação organizada com adição, subtração, multiplicação, divisão protegida, potência e porcentagem,
               com arquitetura detalhada e simulador interativo de linha de comando.
             </p>
           </div>

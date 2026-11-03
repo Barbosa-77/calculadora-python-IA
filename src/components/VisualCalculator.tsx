@@ -13,7 +13,7 @@ interface HistoryEntry {
 export const VisualCalculator: React.FC = () => {
   const [display, setDisplay] = useState('0');
   const [firstOperand, setFirstOperand] = useState<number | null>(null);
-  const [operator, setOperator] = useState<'+' | '-' | '*' | '/' | null>(null);
+  const [operator, setOperator] = useState<'+' | '-' | '*' | '/' | '^' | '%' | null>(null);
   const [waitingForSecondOperand, setWaitingForSecondOperand] = useState(false);
   const [lastTrace, setLastTrace] = useState<{
     funcName: string;
@@ -21,6 +21,7 @@ export const VisualCalculator: React.FC = () => {
     argB: number;
     result: number | null;
     error?: string;
+    errorType?: 'ZeroDivisionError' | 'ValueError';
   } | null>(null);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -52,7 +53,7 @@ export const VisualCalculator: React.FC = () => {
     setWaitingForSecondOperand(false);
   };
 
-  const performOperation = (nextOperator: '+' | '-' | '*' | '/') => {
+  const performOperation = (nextOperator: '+' | '-' | '*' | '/' | '^' | '%') => {
     const inputValue = parseFloat(display);
 
     if (firstOperand === null) {
@@ -69,7 +70,7 @@ export const VisualCalculator: React.FC = () => {
     setOperator(nextOperator);
   };
 
-  const compute = (a: number, b: number, op: '+' | '-' | '*' | '/'): number | null => {
+  const compute = (a: number, b: number, op: '+' | '-' | '*' | '/' | '^' | '%'): number | null => {
     let res: number | null = null;
     let funcName = '';
 
@@ -90,7 +91,8 @@ export const VisualCalculator: React.FC = () => {
           argA: a,
           argB: b,
           result: null,
-          error: 'ZeroDivisionError: Não é possível dividir por zero (0)',
+          error: 'Não é possível dividir por zero (0)',
+          errorType: 'ZeroDivisionError',
         });
 
         const entry: HistoryEntry = {
@@ -105,6 +107,54 @@ export const VisualCalculator: React.FC = () => {
         return null;
       }
       res = a / b;
+    } else if (op === '^') {
+      funcName = 'potencia';
+      if (a === 0 && b < 0) {
+        setLastTrace({
+          funcName,
+          argA: a,
+          argB: b,
+          result: null,
+          error: 'Não é possível elevar zero (0) a um expoente negativo.',
+          errorType: 'ZeroDivisionError',
+        });
+
+        const entry: HistoryEntry = {
+          id: Math.random().toString(),
+          expression: `${a} ^ ${b}`,
+          pythonCall: `potencia(${a}, ${b})`,
+          result: 'ZeroDivisionError',
+          isError: true,
+          errorMessage: 'Erro matemático: Não é possível elevar zero (0) a um expoente negativo.',
+        };
+        setHistory((prev) => [entry, ...prev.slice(0, 9)]);
+        return null;
+      }
+      if (a < 0 && !Number.isInteger(b)) {
+        setLastTrace({
+          funcName,
+          argA: a,
+          argB: b,
+          result: null,
+          error: 'O resultado é um número complexo (base negativa com expoente fracionário).',
+          errorType: 'ValueError',
+        });
+
+        const entry: HistoryEntry = {
+          id: Math.random().toString(),
+          expression: `${a} ^ ${b}`,
+          pythonCall: `potencia(${a}, ${b})`,
+          result: 'ValueError',
+          isError: true,
+          errorMessage: 'Erro matemático: Número complexo não suportado.',
+        };
+        setHistory((prev) => [entry, ...prev.slice(0, 9)]);
+        return null;
+      }
+      res = Math.pow(a, b);
+    } else if (op === '%') {
+      funcName = 'porcentagem';
+      res = (a * b) / 100;
     }
 
     if (res !== null) {
@@ -187,18 +237,31 @@ export const VisualCalculator: React.FC = () => {
             {/* Row 1 */}
             <button
               onClick={clearAll}
-              className="col-span-2 rounded-xl bg-slate-100 p-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:scale-95 transition-all dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              className="rounded-xl bg-slate-100 p-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:scale-95 transition-all dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
             >
-              AC (Limpar)
+              AC
             </button>
             <button
-              onClick={() => {
-                const val = parseFloat(display);
-                setDisplay(String(-val));
-              }}
-              className="rounded-xl bg-slate-100 p-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:scale-95 transition-all dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 font-mono"
+              onClick={() => performOperation('^')}
+              className={`rounded-xl p-3.5 text-base font-bold font-mono active:scale-95 transition-all ${
+                operator === '^'
+                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
+                  : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60'
+              }`}
+              title="Potência (a ^ b)"
             >
-              +/-
+              ^
+            </button>
+            <button
+              onClick={() => performOperation('%')}
+              className={`rounded-xl p-3.5 text-base font-bold font-mono active:scale-95 transition-all ${
+                operator === '%'
+                  ? 'bg-emerald-600 text-white ring-2 ring-emerald-400'
+                  : 'bg-emerald-100 text-emerald-900 hover:bg-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:hover:bg-emerald-900/60'
+              }`}
+              title="Porcentagem (b% de a)"
+            >
+              %
             </button>
             <button
               onClick={() => performOperation('/')}
@@ -303,8 +366,17 @@ export const VisualCalculator: React.FC = () => {
 
             {/* Row 5 */}
             <button
+              onClick={() => {
+                const val = parseFloat(display);
+                setDisplay(String(-val));
+              }}
+              className="rounded-xl bg-slate-100 p-3.5 text-sm font-semibold text-slate-800 hover:bg-slate-200 active:scale-95 transition-all dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 font-mono"
+            >
+              +/-
+            </button>
+            <button
               onClick={() => inputDigit('0')}
-              className="col-span-2 rounded-xl bg-slate-50 p-3.5 text-lg font-semibold text-slate-900 hover:bg-slate-100 active:scale-95 transition-all dark:bg-slate-800/60 dark:text-white dark:hover:bg-slate-800 font-mono"
+              className="rounded-xl bg-slate-50 p-3.5 text-lg font-semibold text-slate-900 hover:bg-slate-100 active:scale-95 transition-all dark:bg-slate-800/60 dark:text-white dark:hover:bg-slate-800 font-mono"
             >
               0
             </button>
@@ -350,7 +422,7 @@ export const VisualCalculator: React.FC = () => {
 
                   {lastTrace.error ? (
                     <div className="pl-4 pt-1 text-rose-400 font-semibold">
-                      raise ZeroDivisionError(&quot;{lastTrace.error}&quot;)
+                      raise {lastTrace.errorType ?? 'ZeroDivisionError'}(&quot;{lastTrace.error}&quot;)
                     </div>
                   ) : (
                     <div className="pl-4 pt-1 text-emerald-400 font-bold">
@@ -363,8 +435,8 @@ export const VisualCalculator: React.FC = () => {
                   <div className="p-3 rounded-lg bg-rose-50 border border-rose-200 text-xs text-rose-800 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-300 flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-bold block">Proteção de Exceção Ativada:</span>
-                      O divisor é zero. Em vez de travar o interpretador, o bloco <code className="font-mono bg-rose-100 dark:bg-rose-900/60 px-1 py-0.5 rounded">try/except ZeroDivisionError</code> interceptou a exceção e manteve o sistema estável!
+                      <span className="font-bold block">Proteção de Exceção Ativada ({lastTrace.errorType ?? 'ZeroDivisionError'}):</span>
+                      {lastTrace.error} O bloco <code className="font-mono bg-rose-100 dark:bg-rose-900/60 px-1 py-0.5 rounded">try/except ({lastTrace.errorType ?? 'ZeroDivisionError'}, ValueError)</code> interceptou a exceção e manteve o sistema estável!
                     </div>
                   </div>
                 ) : (

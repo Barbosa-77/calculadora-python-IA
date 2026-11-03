@@ -6,7 +6,7 @@ interface TestCase {
   id: string;
   name: string;
   method: string;
-  category: 'Adição' | 'Subtração' | 'Multiplicação' | 'Divisão' | 'Exceção';
+  category: 'Adição' | 'Subtração' | 'Multiplicação' | 'Divisão' | 'Potência' | 'Porcentagem' | 'Exceção';
   description: string;
   assertion: string;
   expected: string;
@@ -94,6 +94,51 @@ const TEST_CASES: TestCase[] = [
     assertion: 'with self.assertRaises(ZeroDivisionError): divisao(10, 0)',
     expected: 'ZeroDivisionError',
   },
+  {
+    id: '10',
+    name: 'test_potencia_positivos',
+    method: 'potencia(2, 3)',
+    category: 'Potência',
+    description: 'Calcula base inteira com expoente positivo (2^3).',
+    assertion: 'self.assertEqual(potencia(2, 3), 8.0)',
+    expected: '8.0',
+  },
+  {
+    id: '11',
+    name: 'test_potencia_expoente_zero',
+    method: 'potencia(5, 0)',
+    category: 'Potência',
+    description: 'Qualquer número elevado a zero resulta em 1.',
+    assertion: 'self.assertEqual(potencia(5, 0), 1.0)',
+    expected: '1.0',
+  },
+  {
+    id: '12',
+    name: 'test_potencia_zero_negativo',
+    method: 'potencia(0, -2)',
+    category: 'Exceção',
+    description: 'Garante que zero elevado a expoente negativo levanta ZeroDivisionError.',
+    assertion: 'with self.assertRaises(ZeroDivisionError): potencia(0, -2)',
+    expected: 'ZeroDivisionError',
+  },
+  {
+    id: '13',
+    name: 'test_porcentagem_padrao',
+    method: 'porcentagem(200, 15)',
+    category: 'Porcentagem',
+    description: 'Calcula 15% de 200.',
+    assertion: 'self.assertEqual(porcentagem(200, 15), 30.0)',
+    expected: '30.0',
+  },
+  {
+    id: '14',
+    name: 'test_porcentagem_decimal',
+    method: 'porcentagem(50, 2.5)',
+    category: 'Porcentagem',
+    description: 'Calcula 2.5% de 50.',
+    assertion: 'self.assertEqual(porcentagem(50, 2.5), 1.25)',
+    expected: '1.25',
+  },
 ];
 
 export const UnitTestsViewer: React.FC = () => {
@@ -175,7 +220,7 @@ export const UnitTestsViewer: React.FC = () => {
           <div className="text-2xl font-bold font-mono text-slate-900 dark:text-white mt-1 tabular-nums">
             {TEST_CASES.length}
           </div>
-          <div className="text-[11px] text-slate-400 mt-0.5">Cobrem +, -, *, / e ZeroDivision</div>
+          <div className="text-[11px] text-slate-400 mt-0.5">Cobrem +, -, *, /, ^, % e Exceções</div>
         </div>
 
         <div className="p-4 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
